@@ -12,13 +12,13 @@
     "typecheck:web": "vue-tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
-    "dev": "electron-vite dev",
-    "build": "npm run typecheck && electron-vite build",
+    "dev": "chcp 65001 && electron-vite dev",
+    "build": "electron-vite build",
     "postinstall": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
-    "build:mac": "npm run build && electron-builder --mac",
-    "build:linux": "npm run build && electron-builder --linux",
+    "build:unpack": "rimraf dist && npm run build && electron-builder --config=electron-builder.config.js --dir",
+    "build:win": "rimraf dist && npm run build && electron-builder --config=electron-builder.config.js --win",
+    "build:mac": "rimraf dist && npm run build && electron-builder --config=electron-builder.config.js --mac",
+    "build:linux": "rimraf dist && npm run build && electron-builder --config=electron-builder.config.js --linux",
     "lint": "lint-staged",
     "prepare": "husky",
     "commit": "git add . && git cz"
@@ -26,7 +26,8 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.3.9",
+    "vue-router": "^4.5.1"
   },
   "config": {
     "commitizen": {
@@ -51,6 +52,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
     "vite": "^7.0.5",
     "vue": "^3.5.17",

@@ -3,8 +3,8 @@
   "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*"],
   "compilerOptions": {
     "composite": true,
-    "moduleResolution": "bundler",
     "types": ["electron-vite/node"],
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
       "@main/*": ["src/main/*"],
