@@ -16,6 +16,7 @@ export default defineConfig({
     resolve: {
       alias: {
         '@main': resolve('src/main'),
+        '@utils': resolve('src/utils'),
         '@src': resolve('src')
       }
     },
@@ -27,6 +28,7 @@ export default defineConfig({
     resolve: {
       alias: {
         '@preload': resolve('src/preload'),
+        '@utils': resolve('src/utils'),
         '@src': resolve('src')
       }
     },
@@ -37,6 +39,7 @@ export default defineConfig({
     resolve: {
       alias: {
         '@renderer': resolve('src/renderer/src'),
+        '@utils': resolve('src/utils'),
         '@src': resolve('src')
       }
     },
