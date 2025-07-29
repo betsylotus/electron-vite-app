@@ -1,6 +1,6 @@
 import log, { LogLevel } from 'electron-log'
 import { app } from 'electron'
-import path from 'path'
+import { join, resolve, parse } from 'path'
 import fs from 'fs'
 
 // 日志配置接口
@@ -107,11 +107,11 @@ class Logger {
   setupFileTransport() {
     // 设置日志目录
     if (this.config.logDir) {
-      const logDir = path.resolve(this.config.logDir)
+      const logDir = resolve(this.config.logDir)
       if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true })
       }
-      log.transports.file.resolvePathFn = () => path.join(logDir, `${this.config.filePrefix}.log`)
+      log.transports.file.resolvePathFn = () => join(logDir, `${this.config.filePrefix}.log`)
     } else {
       // 使用默认路径，但自定义文件名
       log.transports.file.fileName = `${this.config.filePrefix}.log`
@@ -122,9 +122,9 @@ class Logger {
 
     // 设置文件归档函数
     log.transports.file.archiveLogFn = (file) => {
-      const info = path.parse(file.path)
+      const info = parse(file.path)
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      return path.join(info.dir, `${info.name}-${timestamp}${info.ext}`)
+      return join(info.dir, `${info.name}-${timestamp}${info.ext}`)
     }
   }
 
@@ -215,15 +215,7 @@ const createMainLogger = (config?: LoggerConfig): Logger => {
   return new Logger({
     filePrefix: `${appName}-main`,
     logDir: logDir,
-    ...config
-  })
-}
-
-const createRendererLogger = (config?: LoggerConfig): Logger => {
-  return new Logger({
-    filePrefix: `${appName}-renderer`,
-    logDir: logDir,
-    // 渲染进程通常不直接写文件，但是为了方便调试，还是开启
+    enableConsole: true,
     enableFile: true,
     ...config
   })
@@ -234,8 +226,9 @@ const createPreloadLogger = (config?: LoggerConfig): Logger => {
     filePrefix: `${appName}-preload`,
     logDir: logDir,
     enableFile: true,
+    enableConsole: true,
     ...config
   })
 }
 
-export { createMainLogger, createRendererLogger, createPreloadLogger }
+export { createMainLogger, createPreloadLogger }

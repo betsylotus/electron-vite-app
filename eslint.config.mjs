@@ -34,8 +34,13 @@ export default tseslint.config(
         }
       ],
 
-      // typescript配置
-      '@typescript-eslint/explicit-function-return-type': 'off'
+      // ==========typescript配置==========
+      // 禁用函数返回类型
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      // 禁用any类型
+      '@typescript-eslint/no-explicit-any': 'off',
+      // 禁用未使用的变量
+      '@typescript-eslint/no-unused-vars': 'off'
     }
   },
   eslintConfigPrettier
