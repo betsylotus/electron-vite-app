@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { createMainWindow } from './window'
 import { createMainLogger } from '@utils/index'
+import { setupIPC } from './ipc'
 
 const logger = createMainLogger({
   maxSize: 20,
@@ -259,6 +260,15 @@ async function initializeApp(config: AppConfig = {}): Promise<void> {
 
     // 设置窗口相关事件监听器
     setupAppEvents()
+
+    // 设置IPC事件
+    try {
+      setupIPC()
+      logger.info('IPC事件设置完成')
+    } catch (error) {
+      logger.error('IPC事件设置失败', error as Error)
+      throw error
+    }
 
     // 创建主窗口
     createMainWindow()

@@ -40,7 +40,9 @@ export default tseslint.config(
       // 禁用any类型
       '@typescript-eslint/no-explicit-any': 'off',
       // 禁用未使用的变量
-      '@typescript-eslint/no-unused-vars': 'off'
+      '@typescript-eslint/no-unused-vars': 'off',
+      // 禁用空函数
+      '@typescript-eslint/no-empty-function': 'off'
     }
   },
   eslintConfigPrettier

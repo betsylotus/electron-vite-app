@@ -1,3 +1,5 @@
+import '@renderer/style'
+
 import App from '@renderer/App.vue'
 import { createApp } from 'vue'
 import { setupStore } from '@renderer/store'
