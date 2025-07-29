@@ -16,6 +16,7 @@ export default {
     '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
   ],
   asarUnpack: ['resources/**'],
+
   // Windows 平台配置
   win: {
     // Windows 可执行文件名
@@ -67,7 +68,7 @@ export default {
     artifactName: '${name}-${version}.${ext}'
   },
   npmRebuild: false,
-  // 自动更新发布配置
+  // 生产环境自动更新配置
   publish: {
     provider: 'generic',
     url: 'https://example.com/auto-updates'

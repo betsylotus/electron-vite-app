@@ -32,7 +32,10 @@ export default tseslint.config(
             lang: 'ts'
           }
         }
-      ]
+      ],
+
+      // typescript配置
+      '@typescript-eslint/explicit-function-return-type': 'off'
     }
   },
   eslintConfigPrettier
