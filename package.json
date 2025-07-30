@@ -26,6 +26,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "ali-oss": "^6.23.0",
     "electron-log": "^5.4.1",
     "electron-updater": "^6.3.9",
     "pinia": "^3.0.3",
@@ -42,6 +43,7 @@
     "@electron-toolkit/eslint-config-prettier": "3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@types/ali-oss": "^6.16.11",
     "@types/node": "^22.16.5",
     "@vitejs/plugin-vue": "^6.0.0",
     "commitizen": "^4.3.1",
