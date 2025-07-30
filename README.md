@@ -114,7 +114,152 @@ $ pnpm build:linux
 - contextBridge
   - 运行在`预加载脚本`中。它是安全的桥梁搭建工具，能将预加载脚本中的特权功能（如 ipcRenderer）安全地暴露给渲染进程
 
-#### 通信场景
+#### 通信方式简单理解
+
+##### 渲染进程 → 主进程
+
+- 方式一：使用 ipcRenderer.invoke() + ipcMain.handle()
+
+```javascript
+// preload.js
+const { contextBridge, ipcRenderer } = require('electron')
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  // 异步调用主进程
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  openFile: () => ipcRenderer.invoke('dialog:openFile')
+})
+
+// main.js
+const { ipcMain, dialog, app } = require('electron')
+
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion()
+})
+
+ipcMain.handle('dialog:openFile', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [{ name: 'Images', extensions: ['jpg', 'png', 'gif'] }]
+  })
+  return result.filePaths
+})
+
+// renderer.js (渲染进程)
+async function handleGetVersion() {
+  const version = await window.electronAPI.getAppVersion()
+  console.log('App version:', version)
+}
+
+async function handleOpenFile() {
+  const filePaths = await window.electronAPI.openFile()
+  console.log('Selected files:', filePaths)
+}
+```
+
+- 方式二：使用 ipcRenderer.send() + ipcMain.on()
+
+```javascript
+// preload.js
+contextBridge.exposeInMainWorld('electronAPI', {
+  // 单向发送消息
+  minimize: () => ipcRenderer.send('window-minimize'),
+  setTitle: (title) => ipcRenderer.send('set-title', title)
+})
+
+// main.js
+ipcMain.on('window-minimize', () => {
+  const focusedWindow = BrowserWindow.getFocusedWindow()
+  if (focusedWindow) {
+    focusedWindow.minimize()
+  }
+})
+
+ipcMain.on('set-title', (event, title) => {
+  const webContents = event.sender
+  const win = BrowserWindow.fromWebContents(webContents)
+  win.setTitle(title)
+})
+
+// renderer.js
+function minimizeWindow() {
+  window.electronAPI.minimize()
+}
+
+function setWindowTitle(title) {
+  window.electronAPI.setTitle(title)
+}
+```
+
+##### 主进程 → 渲染进程
+
+```javascript
+// preload.js
+contextBridge.exposeInMainWorld('electronAPI', {
+  // 监听来自主进程的消息
+  onUpdateCounter: (callback) => {
+    ipcRenderer.on('update-counter', (_event, value) => callback(value))
+  },
+  onMenuAction: (callback) => {
+    ipcRenderer.on('menu-action', (_event, action) => callback(action))
+  }
+})
+
+// main.js
+function createWindow() {
+  const mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  })
+
+  // 发送消息到渲染进程
+  setInterval(() => {
+    mainWindow.webContents.send('update-counter', Math.random())
+  }, 1000)
+
+  return mainWindow
+}
+
+// 菜单点击事件
+const template = [
+  {
+    label: 'File',
+    submenu: [
+      {
+        label: 'New',
+        click: () => {
+          const focusedWindow = BrowserWindow.getFocusedWindow()
+          if (focusedWindow) {
+            focusedWindow.webContents.send('menu-action', 'new')
+          }
+        }
+      }
+    ]
+  }
+]
+
+// renderer.js
+// 接收主进程消息
+window.electronAPI.onUpdateCounter((value) => {
+  document.getElementById('counter').textContent = value
+})
+
+window.electronAPI.onMenuAction((action) => {
+  console.log('Menu action:', action)
+  if (action === 'new') {
+    // 处理新建操作
+  }
+})
+```
+
+---
+
+#### 通信场景详细讲解
 
 ##### 渲染进程 → 主进程（双向通信）
 
