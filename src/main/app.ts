@@ -3,6 +3,7 @@ import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { createMainWindow } from './window'
 import { createMainLogger } from '@utils/index'
 import { setupIPC } from './ipc'
+import { initializeServices, cleanupServices } from './service'
 
 const logger = createMainLogger({
   maxSize: 20,
@@ -179,9 +180,18 @@ function setupAppLifecycle(): void {
   })
 
   // 应用即将退出
-  app.on('before-quit', () => {
+  app.on('before-quit', async () => {
     logger.info('应用即将退出')
-    // 可以在这里执行清理工作或阻止退出
+
+    // 清理服务
+    try {
+      await cleanupServices()
+      logger.info('服务清理完成')
+    } catch (error) {
+      logger.error('服务清理失败', error as Error)
+    }
+
+    // 可以在这里执行其他清理工作或阻止退出
     // event.preventDefault() // 阻止退出
   })
 
@@ -267,6 +277,15 @@ async function initializeApp(config: AppConfig = {}): Promise<void> {
       logger.info('IPC事件设置完成')
     } catch (error) {
       logger.error('IPC事件设置失败', error as Error)
+      throw error
+    }
+
+    // 初始化服务（包括内存管理）
+    try {
+      await initializeServices()
+      logger.info('服务初始化完成')
+    } catch (error) {
+      logger.error('服务初始化失败', error as Error)
       throw error
     }
 

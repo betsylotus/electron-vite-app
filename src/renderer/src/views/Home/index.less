@@ -193,6 +193,15 @@
       height: 100%;
       min-height: 200px;
     }
+
+    // 全宽样式，用于内存监控等需要更多空间的组件
+    &.full-width {
+      grid-column: 1 / -1;
+
+      > * {
+        min-height: auto;
+      }
+    }
   }
 }
 
