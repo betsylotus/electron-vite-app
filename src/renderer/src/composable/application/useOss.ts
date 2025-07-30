@@ -226,6 +226,18 @@ function useOss() {
     }
   }
 
+  // 获取分片列表
+  const listParts = async (objectName: string, uploadId: string): Promise<any[]> => {
+    // 检查客户端是否已初始化
+    ensureClientInitialized()
+    try {
+      const result = await client.value!.listParts(objectName, uploadId)
+      return result.parts || []
+    } catch (e: any) {
+      return handleError('获取分片列表', e)
+    }
+  }
+
   // 完成分片上传
   const completeMultipartUpload = async (
     objectName: string,
@@ -259,51 +271,77 @@ function useOss() {
 
   // 上传大文件（手动分片），阿里云 OSS SDK 的 内置 multipartUpload 方法，不支持断点续传
   const uploadLargeFile = async (file: File, objectName: string): Promise<any> => {
+    let uploadId: string | null = null
+
     try {
       console.log(`[OSS] 开始上传大文件: ${objectName}, 大小: ${file.size} bytes`)
 
-      // 1. 初始化分片上传
-      const uploadId = await initMultipartUpload(objectName)
+      // 初始化分片上传
+      uploadId = await initMultipartUpload(objectName)
       console.log('uploadLargeFile-uploadId', uploadId)
 
-      // 2. 将文件分片
+      // 将文件分片
       const chunkSize = OSS_CONFIG.CHUNK_SIZE
       const chunks = Math.ceil(file.size / chunkSize)
       const parts: IUploadPart[] = []
 
       console.log(`[OSS] 文件将被分为 ${chunks} 个分片`)
 
-      // 3. 上传所有分片
+      // 上传所有分片
       for (let i = 0; i < chunks; i++) {
+        // 检查已上传的分片
+        const existingParts = await listParts(objectName, uploadId)
+
+        // 检查是否已上传
+        const alreadyUploaded = existingParts.find((part) => part.PartNumber === i + 1)
+
+        if (alreadyUploaded) {
+          console.log(`[OSS] 分片 ${i + 1} 已存在，跳过上传`)
+          parts.push({
+            number: i + 1,
+            etag: alreadyUploaded.ETag
+          })
+          continue
+        }
+
+        // 上传新分片
         const start = i * chunkSize
         const end = Math.min(file.size, start + chunkSize)
         const chunk = file.slice(start, end)
 
         const result = await uploadPart(objectName, uploadId, i + 1, chunk)
-        console.log('uploadLargeFile-result', result)
-
         parts.push(result)
+
+        // 因为每上传一个分片就要调用一次 listParts，每10个分片检查一次，避免频繁调用
+        if ((i + 1) % 10 === 0 || i === chunks - 1) {
+          const uploadedParts = await listParts(objectName, uploadId)
+          console.log(`[OSS] 当前已上传分片数: ${uploadedParts.length}/${chunks}`)
+        }
       }
 
-      // 4. 完成分片上传
+      // 检查是否上传完整
+      const uploadedParts = await listParts(objectName, uploadId)
+      if (uploadedParts.length !== chunks) {
+        throw new Error(`分片上传不完整: 期望 ${chunks} 个分片，实际 ${uploadedParts.length} 个`)
+      }
+
+      // 完成分片上传
       const completeResult = await completeMultipartUpload(objectName, uploadId, parts)
       console.log('[OSS] 大文件上传完成:', completeResult)
 
       return completeResult
     } catch (e: any) {
+      // 只有在成功初始化分片上传后才尝试获取已上传分片信息
+      if (uploadId) {
+        try {
+          const uploadedParts = await listParts(objectName, uploadId)
+          console.log(`[OSS] 上传失败，已成功上传的分片:`, uploadedParts)
+          // 可以将这些信息保存到本地存储，用于后续断点续传
+        } catch (listError) {
+          console.warn('[OSS] 获取已上传分片信息失败:', listError)
+        }
+      }
       handleError('上传大文件', e)
-    }
-  }
-
-  // 获取分片列表
-  const listParts = async (objectName: string, uploadId: string): Promise<any[]> => {
-    // 检查客户端是否已初始化
-    ensureClientInitialized()
-    try {
-      const result = await client.value!.listParts(objectName, uploadId)
-      return result.parts || []
-    } catch (e: any) {
-      return handleError('获取分片列表', e)
     }
   }
 
