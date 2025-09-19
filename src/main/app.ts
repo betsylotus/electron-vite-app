@@ -280,7 +280,7 @@ async function initializeApp(config: AppConfig = {}): Promise<void> {
       throw error
     }
 
-    // 初始化服务（包括内存管理）
+    // 初始化服务
     try {
       await initializeServices()
       logger.info('服务初始化完成')

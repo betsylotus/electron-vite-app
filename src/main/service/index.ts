@@ -1,10 +1,4 @@
 import { createMainLogger } from '@utils/index'
-import {
-  getMemoryManager,
-  startMemoryMonitoring,
-  stopMemoryMonitoring,
-  MemoryEventType
-} from './modules'
 
 const logger = createMainLogger({
   maxSize: 20,
@@ -30,8 +24,7 @@ class ServiceManager {
     try {
       logger.info('开始初始化服务管理器')
 
-      // 初始化内存管理服务
-      await this.initializeMemoryService()
+      // 可以在此处初始化其他服务模块
 
       this.isInitialized = true
       logger.info('服务管理器初始化完成')
@@ -39,44 +32,6 @@ class ServiceManager {
       logger.error('服务管理器初始化失败', error as Error)
       throw error
     }
-  }
-
-  /**
-   * 初始化内存管理服务
-   */
-  private async initializeMemoryService(): Promise<void> {
-    logger.info('初始化内存管理服务')
-
-    const memoryManager = getMemoryManager({
-      interval: 30000, // 30秒监控间隔
-      warningThreshold: 80, // 80%告警
-      criticalThreshold: 90, // 90%危险
-      autoGC: true, // 启用自动垃圾回收
-      autoGCThreshold: 85, // 85%时自动GC
-      historyLimit: 100 // 保存100条历史记录
-    })
-
-    // 监听内存事件
-    memoryManager.on(MemoryEventType.WARNING, (alert) => {
-      logger.warn('内存使用告警', alert)
-    })
-
-    memoryManager.on(MemoryEventType.CRITICAL, (alert) => {
-      logger.error('内存使用危险', alert)
-    })
-
-    memoryManager.on(MemoryEventType.LEAK_DETECTED, (leakInfo) => {
-      logger.error('检测到内存泄漏', leakInfo)
-    })
-
-    memoryManager.on(MemoryEventType.GC_EXECUTED, (gcInfo) => {
-      logger.info('垃圾回收执行', gcInfo)
-    })
-
-    // 开始内存监控
-    startMemoryMonitoring()
-
-    logger.info('内存管理服务初始化完成')
   }
 
   /**
@@ -90,8 +45,7 @@ class ServiceManager {
     logger.info('开始清理服务管理器')
 
     try {
-      // 停止内存监控
-      stopMemoryMonitoring()
+      // 可以在此处清理其他服务模块
 
       this.isInitialized = false
       logger.info('服务管理器清理完成')
@@ -105,13 +59,9 @@ class ServiceManager {
    */
   public getStatus(): {
     initialized: boolean
-    memoryStats: any
   } {
-    const memoryManager = getMemoryManager()
-
     return {
-      initialized: this.isInitialized,
-      memoryStats: memoryManager.getMemoryStats()
+      initialized: this.isInitialized
     }
   }
 }
